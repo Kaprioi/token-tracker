@@ -23,7 +23,7 @@ swiftc -O -target arm64-apple-macos13 TokenTracker.swift -o /tmp/tt-arm64
 swiftc -O -target x86_64-apple-macos13 TokenTracker.swift -o /tmp/tt-x86_64
 lipo -create /tmp/tt-arm64 /tmp/tt-x86_64 -output "$APP/Contents/MacOS/Token Tracker"
 
-cp "$ROOT/token_meter.py" "$ROOT/dashboard.html" "$APP/Contents/Resources/"
+cp "$ROOT/token_meter.py" "$ROOT/token_tui.py" "$ROOT/dashboard.html" "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

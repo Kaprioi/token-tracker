@@ -74,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     func buildWindow() {
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "status")
+        config.userContentController.add(self, name: "theme")
         // leave room for the traffic-light buttons under the transparent title bar
         config.userContentController.addUserScript(WKUserScript(
             source: "document.documentElement.classList.add('mac-app')",
@@ -89,8 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
-        window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = NSColor(red: 0x17/255, green: 0x19/255, blue: 0x27/255, alpha: 1)
+        window.backgroundColor = NSColor(red: 0xfa/255, green: 0xf9/255, blue: 0xf5/255, alpha: 1)
         window.minSize = NSSize(width: 360, height: 480)
         window.isReleasedWhenClosed = false
         window.contentView = webView
@@ -149,10 +149,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         statusItem.menu = menu
     }
 
-    // Dashboard posts "62%" here on every update.
+    // Dashboard posts "CC 62% · CX 55%" on every update, and its background color on tab change.
     func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "status", let text = message.body as? String else { return }
-        statusItem.button?.title = " " + text
+        guard let text = message.body as? String else { return }
+        if message.name == "status" {
+            statusItem.button?.title = " " + text
+        } else if message.name == "theme", let color = NSColor(hex: text) {
+            window.backgroundColor = color
+            // light titlebar buttons on dark themes, dark on light ones
+            let rgb = color.usingColorSpace(.sRGB) ?? color
+            let luma = 0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent
+            window.appearance = NSAppearance(named: luma < 0.5 ? .darkAqua : .aqua)
+        }
     }
 
     func buildMainMenu() {
@@ -195,6 +203,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
 
     func showError(_ text: String) {
         let a = NSAlert(); a.messageText = "Token Tracker"; a.informativeText = text; a.runModal()
+    }
+}
+
+extension NSColor {
+    convenience init?(hex: String) {
+        var h = hex.trimmingCharacters(in: .whitespaces)
+        guard h.hasPrefix("#") else { return nil }
+        h.removeFirst()
+        guard h.count == 6, let v = UInt32(h, radix: 16) else { return nil }
+        self.init(srgbRed: CGFloat(v >> 16 & 0xff) / 255, green: CGFloat(v >> 8 & 0xff) / 255,
+                  blue: CGFloat(v & 0xff) / 255, alpha: 1)
     }
 }
 
