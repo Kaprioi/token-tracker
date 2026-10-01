@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b2f50"/><stop offset="1" stop-color="#12141f"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#d66ef5"/><stop offset=".55" stop-color="#8f6bf2"/><stop offset="1" stop-color="#22e3dc"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22e3dc"/><stop offset="1" stop-color="#8f6bf2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".42" r=".55">
+      <stop offset="0" stop-color="#8f6bf2" stop-opacity=".35"/><stop offset="1" stop-color="#8f6bf2" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <rect x="101.5" y="101.5" width="821" height="821" rx="184" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="3"/>
+  <!-- gauge track + value (270° sweep, ~72% full) -->
+  <g transform="rotate(135 512 512)" fill="none" stroke-linecap="round" stroke-width="62">
+    <circle cx="512" cy="512" r="262" stroke="#ffffff" stroke-opacity=".08" stroke-dasharray="1235 1646"/>
+    <circle cx="512" cy="512" r="262" stroke="url(#arc)" stroke-opacity=".55" stroke-dasharray="890 1646" filter="url(#soft)"/>
+    <circle cx="512" cy="512" r="262" stroke="url(#arc)" stroke-dasharray="890 1646"/>
+  </g>
+  <!-- rising usage bars -->
+  <g fill="url(#bar)">
+    <rect x="392" y="520" width="58" height="140" rx="16"/>
+    <rect x="483" y="440" width="58" height="220" rx="16"/>
+    <rect x="574" y="370" width="58" height="290" rx="16"/>
+  </g>
+</svg>

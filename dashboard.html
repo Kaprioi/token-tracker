@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Tracker</title>
+<style>
+  :root {
+    --bg: #171927; --card: #1f2234; --card2: #262a40; --line: #2c3049;
+    --text: #f2f3fa; --muted: #8f93b0;
+    --purple-a: #d66ef5; --purple-b: #8f6bf2;
+    --cyan-a: #22e3dc; --cyan-b: #4b8ff0;
+    --magenta: #d61fd8; --blue: #2f8cff;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); color: var(--text); }
+  body { font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         padding: 16px; min-width: 320px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  h1 { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+  h1 small { display: block; font-size: 11px; font-weight: 500; color: var(--muted);
+             text-transform: uppercase; letter-spacing: 1.2px; }
+  .live { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan-a);
+         box-shadow: 0 0 8px var(--cyan-a); }
+  .dot.idle { background: var(--muted); box-shadow: none; }
+  .demo { background: var(--magenta); color: #fff; font-size: 10px; padding: 2px 8px;
+          border-radius: 10px; font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .hero { border-radius: 14px; padding: 14px; position: relative; overflow: hidden; cursor: default; }
+  .hero::after { content: ""; position: absolute; width: 110px; height: 110px; border-radius: 50%;
+                 right: -40px; bottom: -50px; background: rgba(255,255,255,.12); }
+  .hero.p { background: linear-gradient(135deg, var(--purple-a), var(--purple-b)); cursor: pointer; }
+  .hero.c { background: linear-gradient(135deg, var(--cyan-a), var(--cyan-b)); }
+  .hero .label { font-size: 12px; opacity: .92; }
+  .hero .big { font-size: 34px; font-weight: 700; line-height: 1.15; margin-top: 6px; }
+  .hero .big span { font-size: 15px; font-weight: 500; opacity: .85; margin-left: 2px; }
+  .hero .sub { font-size: 11px; opacity: .9; margin-top: 2px; }
+  .hero .est { font-size: 9px; background: rgba(0,0,0,.18); border-radius: 6px; padding: 1px 5px; margin-left: 4px; }
+
+  .pill { background: var(--card); border-radius: 12px; padding: 10px 12px; display: flex;
+          align-items: center; gap: 10px; }
+  .pill .ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .pill .ic.p { background: linear-gradient(135deg, var(--purple-a), var(--magenta)); }
+  .pill .ic.c { background: linear-gradient(135deg, var(--cyan-a), var(--cyan-b)); }
+  .pill .name { flex: 1; font-size: 12px; color: var(--muted); }
+  .pill .name b { display: block; color: var(--text); font-size: 13px; font-weight: 600; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
+  .badge.p { background: rgba(214,110,245,.18); color: #e7a6fb; }
+  .badge.c { background: rgba(34,227,220,.15); color: #7af0ea; }
+  .badge.warn { background: rgba(255,92,138,.18); color: #ff8fb0; }
+
+  .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .card h2 { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .card h2 small { font-weight: 500; color: var(--muted); font-size: 11px; }
+  svg text { fill: var(--muted); font-size: 9px; }
+
+  .donut-row { display: flex; align-items: center; gap: 14px; }
+  .legend { flex: 1; display: grid; gap: 7px; min-width: 0; }
+  .legend div { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .legend i { width: 12px; height: 12px; border-radius: 50%; border: 3px solid; flex: none; }
+  .legend span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend em { font-style: normal; color: var(--muted); font-size: 11px; }
+
+  .sess { display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; }
+  .row .t { font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .t .on { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+                background: var(--cyan-a); margin-right: 6px; vertical-align: middle; }
+  .row .m { color: var(--muted); font-size: 11px; text-align: right; }
+  .bar { grid-column: 1 / -1; height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+  .bar div { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--cyan-a), var(--cyan-b)); }
+  .bar div.hot { background: linear-gradient(90deg, var(--purple-a), var(--magenta)); }
+  .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 10px 0; }
+  footer { color: var(--muted); font-size: 10px; text-align: center; margin-top: 4px; }
+  .mac-app body { padding-top: 34px; }   /* room for the window buttons */
+</style>
+</head>
+<body>
+<header>
+  <h1><small>Claude Code</small>Token Tracker</h1>
+  <div class="live"><span id="demo"></span><span class="dot" id="dot"></span><span id="updated">loading…</span></div>
+</header>
+
+<div class="grid2">
+  <div class="hero p" id="windowCard" title="Click to set your 5-hour token limit">
+    <div class="label">5-hr window left<span class="est" id="est">est.</span></div>
+    <div class="big" id="winPct">–</div>
+    <div class="sub" id="winSub">&nbsp;</div>
+  </div>
+  <div class="hero c">
+    <div class="label">Context left</div>
+    <div class="big" id="ctxPct">–</div>
+    <div class="sub" id="ctxSub">&nbsp;</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="pill">
+    <div class="ic p"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+    <div class="name">Burn rate<b id="burn">–</b></div>
+  </div>
+  <div class="pill">
+    <div class="ic c"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <div class="name">Runs out<b id="eta">–</b></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Tokens · last 24h <small id="today"></small></h2>
+  <svg id="line" viewBox="0 0 380 130" width="100%"></svg>
+</div>
+
+<div class="card">
+  <h2>By model <small>last 7 days</small></h2>
+  <div class="donut-row">
+    <svg id="donut" viewBox="0 0 120 120" width="120" height="120"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Tokens / week day <small id="week"></small></h2>
+  <svg id="bars" viewBox="0 0 380 130" width="100%"></svg>
+</div>
+
+<div class="card">
+  <h2>Sessions <small>context used</small></h2>
+  <div class="sess" id="sessions"></div>
+</div>
+
+<footer>Reads usage metadata only · window counts input + output + cache writes</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const COLORS = ["#22e3dc", "#2f8cff", "#d66ef5", "#d61fd8", "#8f6bf2", "#1b6fd8"];
+
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e5 ? 0 : 1) + "k";
+  return Math.round(n).toString();
+}
+function dur(ms) {
+  const m = Math.max(0, Math.round(ms / 60000));
+  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+}
+function clock(d) { return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent && parent.appendChild(e);
+  return e;
+}
+
+// ---- 5-hour limit (user-set, otherwise estimated from history)
+function getLimit(s) {
+  let v = null;
+  try { v = parseInt(localStorage.getItem("tm-limit")); } catch (e) {}
+  if (v > 0) return { v, est: false };
+  return { v: Math.max(s.window.past_max, 1_000_000), est: true };
+}
+$("windowCard").onclick = () => {
+  const cur = (() => { try { return localStorage.getItem("tm-limit") || ""; } catch (e) { return ""; } })();
+  const v = prompt("Tokens allowed per 5-hour window (blank = estimate from history):", cur);
+  if (v === null) return;
+  try { v.trim() ? localStorage.setItem("tm-limit", parseInt(v.replace(/\D/g, ""))) : localStorage.removeItem("tm-limit"); } catch (e) {}
+  load();
+};
+
+// ---- charts
+function smoothPath(pts) {
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    const lo = Math.min(p1[1], p2[1]), hi = Math.max(p1[1], p2[1]);  // no overshoot
+    c1[1] = Math.min(Math.max(c1[1], lo), hi); c2[1] = Math.min(Math.max(c2[1], lo), hi);
+    d += ` C${c1},${c2},${p2}`;
+  }
+  return d;
+}
+
+function lineChart(data) {
+  const svg = $("line"); svg.innerHTML = "";
+  const W = 380, H = 130, L = 30, T = 14, B = 18, max = Math.max(...data, 1);
+  const defs = el("defs", {}, svg);
+  const g = el("linearGradient", { id: "lf", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el("stop", { offset: 0, "stop-color": "#4b8ff0", "stop-opacity": .55 }, g);
+  el("stop", { offset: 1, "stop-color": "#8f6bf2", "stop-opacity": 0 }, g);
+  for (let i = 0; i <= 3; i++) {
+    const y = T + (H - T - B) * i / 3;
+    el("line", { x1: L, x2: W, y1: y, y2: y, stroke: "#2c3049" }, svg);
+    el("text", { x: L - 5, y: y + 3, "text-anchor": "end" }, svg).textContent = fmt(max * (1 - i / 3));
+  }
+  const pts = data.map((v, i) => [L + (W - L) * i / (data.length - 1), T + (H - T - B) * (1 - v / max)]);
+  const p = smoothPath(pts);
+  el("path", { d: `${p} L${W},${H - B} L${L},${H - B}Z`, fill: "url(#lf)" }, svg);
+  el("path", { d: p, fill: "none", stroke: "#4fb6ff", "stroke-width": 2 }, svg);
+  [0, 6, 12, 18, 23].forEach(i => {
+    const lab = i === 23 ? "now" : `-${23 - i}h`;
+    el("text", { x: pts[i][0], y: H - 4, "text-anchor": i === 0 ? "start" : i === 23 ? "end" : "middle" }, svg).textContent = lab;
+  });
+  const mi = data.indexOf(Math.max(...data));
+  if (data[mi] > 0) {
+    const [x, y] = pts[mi];
+    el("circle", { cx: x, cy: y, r: 6, fill: "#22e3dc", "fill-opacity": .3 }, svg);
+    el("circle", { cx: x, cy: y, r: 3.5, fill: "#22e3dc" }, svg);
+    const tw = 62, tx = Math.min(Math.max(x - tw / 2, L), W - tw);
+    el("rect", { x: tx, y: Math.max(y - 24, 0), width: tw, height: 16, rx: 4, fill: "#c45cf0" }, svg);
+    const t = el("text", { x: tx + tw / 2, y: Math.max(y - 24, 0) + 11, "text-anchor": "middle" }, svg);
+    t.style.fill = "#fff"; t.textContent = `Max = ${fmt(data[mi])}`;
+  }
+}
+
+function donut(models) {
+  const svg = $("donut"); svg.innerHTML = "";
+  const total = models.reduce((a, [, v]) => a + v, 0);
+  const r = 46, C = 2 * Math.PI * r;
+  el("circle", { cx: 60, cy: 60, r, fill: "none", stroke: "#262a40", "stroke-width": 14 }, svg);
+  let off = 0;
+  $("legend").innerHTML = "";
+  models.slice(0, 6).forEach(([name, v], i) => {
+    const len = total ? C * v / total : 0;
+    el("circle", { cx: 60, cy: 60, r, fill: "none", stroke: COLORS[i], "stroke-width": 14,
+      "stroke-dasharray": `${Math.max(len - 2, 0)} ${C}`, "stroke-dashoffset": -off,
+      transform: "rotate(-90 60 60)" }, svg);
+    off += len;
+    const row = document.createElement("div");
+    row.innerHTML = `<i style="border-color:${COLORS[i]}"></i><span></span><em>${Math.round(100 * v / total)}%</em>`;
+    row.querySelector("span").textContent = name;
+    $("legend").appendChild(row);
+  });
+  const t = el("text", { x: 60, y: 58, "text-anchor": "middle" }, svg); t.textContent = "7-day total";
+  const t2 = el("text", { x: 60, y: 74, "text-anchor": "middle" }, svg);
+  t2.style.cssText = "fill:#f2f3fa;font-size:15px;font-weight:700"; t2.textContent = fmt(total);
+  if (!models.length) $("legend").innerHTML = '<div class="empty">No usage yet</div>';
+}
+
+function bars(week) {
+  const svg = $("bars"); svg.innerHTML = "";
+  const W = 380, H = 130, T = 6, B = 18, max = Math.max(...week, 1);
+  const defs = el("defs", {}, svg);
+  const g = el("linearGradient", { id: "bf", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el("stop", { offset: 0, "stop-color": "#22e3dc" }, g);
+  el("stop", { offset: 1, "stop-color": "#8f6bf2" }, g);
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const today = (new Date().getDay() + 6) % 7;
+  const step = W / 7, bw = 18;
+  for (let i = 0; i <= 3; i++) {
+    const y = T + (H - T - B) * i / 3;
+    el("line", { x1: 0, x2: W, y1: y, y2: y, stroke: "#2c3049" }, svg);
+  }
+  week.forEach((v, i) => {
+    const h = Math.max((H - T - B) * v / max, v ? 3 : 0), x = step * i + step / 2;
+    el("rect", { x: x - bw / 2, y: H - B - h, width: bw, height: h, rx: 2, fill: "url(#bf)",
+                 opacity: i === today ? 1 : .8 }, svg);
+    const t = el("text", { x, y: H - 4, "text-anchor": "middle" }, svg);
+    t.textContent = days[i];
+    if (i === today) t.style.fill = "#f2f3fa";
+  });
+}
+
+function sessions(list, now) {
+  const box = $("sessions"); box.innerHTML = "";
+  if (!list.length) { box.innerHTML = '<div class="empty">No Claude Code sessions found</div>'; return; }
+  list.forEach(s => {
+    const pct = Math.min(100, 100 * s.context / s.window);
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<div class="t">${s.active ? '<span class="on"></span>' : ""}<span></span></div>
+      <div class="m">${fmt(s.context)} / ${fmt(s.window)} · ${dur(now - new Date(s.last))} ago</div>
+      <div class="bar"><div class="${pct > 80 ? "hot" : ""}" style="width:${pct}%"></div></div>`;
+    row.querySelector(".t span:last-child").textContent =
+      `${s.project} · ${s.model.replace("claude-", "").split("-2025")[0]}`;
+    box.appendChild(row);
+  });
+}
+
+// ---- main
+let last = null, lastAt = 0;
+function load() { if (last) render(last); }
+function render(s) {
+  const now = new Date();
+  $("demo").innerHTML = s.demo ? '<span class="demo">DEMO DATA</span>' : "";
+  const lim = getLimit(s);
+  $("est").style.display = lim.est ? "" : "none";
+
+  // 5-hour window
+  if (s.window.active) {
+    const left = Math.max(0, 100 - 100 * s.window.used / lim.v);
+    $("winPct").innerHTML = `${Math.round(left)}<span>%</span>`;
+    $("winSub").textContent = `${fmt(s.window.used)} used · resets in ${dur(new Date(s.window.reset) - now)}`;
+  } else {
+    $("winPct").innerHTML = `100<span>%</span>`;
+    $("winSub").textContent = "no active window";
+  }
+
+  // context of latest session
+  const cur = s.sessions[0];
+  if (cur) {
+    const left = Math.max(0, 100 - 100 * cur.context / cur.window);
+    $("ctxPct").innerHTML = `${Math.round(left)}<span>%</span>`;
+    $("ctxSub").textContent = `${cur.project} · ${fmt(cur.context)}/${fmt(cur.window)}`;
+  } else { $("ctxPct").textContent = "–"; $("ctxSub").textContent = "no sessions"; }
+
+  // burn + ETA
+  $("burn").innerHTML = s.burn_per_min > 0
+    ? `${fmt(s.burn_per_min)}<span style="color:var(--muted);font-weight:400"> /min</span>` : "idle";
+  if (s.window.active && s.burn_per_min > 0) {
+    const remaining = Math.max(0, lim.v - s.window.used);
+    const out = new Date(+now + remaining / s.burn_per_min * 60000);
+    const reset = new Date(s.window.reset);
+    $("eta").innerHTML = out < reset
+      ? `<span class="badge warn">${clock(out)}</span>`
+      : `<span class="badge c">after reset</span>`;
+  } else $("eta").innerHTML = `<span class="badge c">not soon</span>`;
+
+  $("today").textContent = `${fmt(s.today_tokens)} today`;
+  $("week").textContent = `${fmt(s.week_tokens)} this week`;
+  lineChart(s.hourly);
+  donut(s.models);
+  bars(s.weekday);
+  sessions(s.sessions, now);
+
+  $("dot").className = s.sessions.some(x => x.active) ? "dot" : "dot idle";
+  const ago = Math.round((Date.now() - lastAt) / 1000);
+  $("updated").textContent = ago < 3 ? "live" : `live · ${ago}s ago`;
+
+  // menu-bar readout in the Mac app
+  const pct = s.window.active ? Math.round(Math.max(0, 100 - 100 * s.window.used / lim.v)) : 100;
+  try { window.webkit.messageHandlers.status.postMessage(`${pct}%`); } catch (e) {}
+}
+
+// Live push: the server sends fresh stats the moment Claude Code writes usage.
+function connect() {
+  const es = new EventSource("/api/stream");
+  es.onmessage = e => { last = JSON.parse(e.data); lastAt = Date.now(); render(last); };
+  es.onerror = () => { $("updated").textContent = "reconnecting…"; $("dot").className = "dot idle"; };
+}
+connect();
+setInterval(load, 1000);   // keep countdowns ticking between pushes
+</script>
+</body>
+</html>
