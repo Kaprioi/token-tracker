@@ -44,7 +44,13 @@ unchanged and saves only token counts to `~/.token-tracker/api-usage.jsonl`, nev
 replies or API keys.
 
 ## Install
-Download `Token Tracker.dmg` from Releases, open it and drag the app into Applications.
+With [Homebrew](https://brew.sh):
+```bash
+brew install --cask kaprioi/tap/token-tracker
+```
+This also clears the quarantine flag below for you.
+
+Or download `Token Tracker.dmg` from Releases, open it and drag the app into Applications.
 It needs macOS 13+ and Python 3 (included with the Xcode Command Line Tools).
 The app is not notarized, so macOS will block it the first time. Run this once after installing:
 ```bash
